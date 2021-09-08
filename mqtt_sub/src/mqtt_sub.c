@@ -102,14 +102,14 @@ void uci_element_subscribe(struct uci_package *package, struct mosquitto **mosq)
 int main(int argc, char *argv[]) 
 {
 	const char *config_name = "mqtt_sub";
-    struct mosquitto *mosq;
+    	struct mosquitto *mosq;
 	struct uci_context *ctx = uci_alloc_context();
 	struct uci_package *package;
 	int rc;
-    openlog(NULL, LOG_CONS, LOG_USER);
+    	openlog(NULL, LOG_CONS, LOG_USER);
 
-    signal(SIGINT, sigHandler);
-    signal(SIGTERM, sigHandler);
+    	signal(SIGINT, sigHandler);
+    	signal(SIGTERM, sigHandler);
 	uci_load_package(ctx, config_name, &package);
 	
 	mosquitto_lib_init();
