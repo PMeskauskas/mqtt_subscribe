@@ -29,10 +29,33 @@ topic.parse = function(self, section, novld, ...)
 	Value.parse(self, section, novld, ...)
 end
 qos = st:option(ListValue, "qos", "QoS level")
-qos:value("0", "At most once (0)")                                                                               
-qos:value("1", "At least once (1)")                                                                              
-qos:value("2", "Exactly once (2)")                                                                               
-qos.rmempty=false                                                                                                
+qos:value("0", "At most once (0)")
+qos:value("1", "At least once (1)")
+qos:value("2", "Exactly once (2)")
+qos.rmempty=false
 qos.default="0"
 
+key = st:option(Value, "key", "Key")
+key.datatype = "string"
+key.maxlength = 65536
+
+type = st:option(ListValue, "type", "Type")
+type:value("", "None")
+type:value("string", "String")
+type:value("decimal", "Decimal")
+type.default=""
+
+comparison = st:option(ListValue, "comparison", "Comparison")
+comparison:value("", "None")
+comparison:value("1", "equal(==)")
+comparison:value("2", "not equal(!=)")
+comparison:value("3", "less(<)")
+comparison:value("4", "less equal(<=)")
+comparison:value("5",  "more(>)")
+comparison:value("6", "more equal(>=)")
+comparison.default=""
+
+value = st:option(Value, "value", "Value")
+value.datatype = "string"
+value.maxlength = 65536
 return m
