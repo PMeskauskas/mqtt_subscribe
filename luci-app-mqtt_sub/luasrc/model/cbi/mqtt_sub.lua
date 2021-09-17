@@ -41,8 +41,8 @@ key.maxlength = 65536
 
 type = st:option(ListValue, "type", "Type")
 type:value("", "None")
-type:value("string", "String")
-type:value("decimal", "Decimal")
+type:value("1", "String")
+type:value("2", "Decimal")
 type.default=""
 
 comparison = st:option(ListValue, "comparison", "Comparison")

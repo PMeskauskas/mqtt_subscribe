@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mqtt_sub
 	CATEGORY:=Base system
 	TITLE:=mqtt_sub
-	DEPENDS:=+libmosquitto +libuci
+	DEPENDS:=+libmosquitto +libuci +libjson-c 
 endef
 
 define Package/mqtt_sub/description
