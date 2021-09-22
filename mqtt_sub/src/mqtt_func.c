@@ -1,6 +1,7 @@
 #include <mosquitto.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "mqtt_sub.h"
 
 void mqtt_new(struct mosquitto **mosq)
@@ -16,12 +17,22 @@ void mqtt_new(struct mosquitto **mosq)
 void mqtt_connect(struct mosquitto **mosq, char *address, char* port)
 {
     int rc = MOSQ_ERR_SUCCESS;
-	int portNum; ;
-	if(!(portNum = atoi(port))){
-		syslog(LOG_ERR, "Port must be an integer");
+	long portNum;
+    char *portPtr;
+
+	if(address == NULL && port == NULL){
+		syslog(LOG_ERR, "Must specify port and address...");
 		mosquitto_lib_cleanup();
 		cleanup(1);
 	}
+
+	portNum = strtol(port, &portPtr, 10);
+	if((portPtr == port)){
+		syslog(LOG_ERR, "Port must be an integer...");
+		mosquitto_lib_cleanup();
+		cleanup(1);
+	}
+	
     rc = mosquitto_connect(*mosq, address, portNum, 60);
 	if(rc != MOSQ_ERR_SUCCESS){
 		mosquitto_destroy(*mosq);

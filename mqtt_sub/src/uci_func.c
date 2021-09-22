@@ -1,10 +1,30 @@
 #include <uci.h>
 #include <syslog.h>
 #include <mosquitto.h>
+#include <ctype.h>
+#include <string.h>
 #include <json-c/json.h>
-#include "mqtt_sub.h"
 #include "mqtt_func.h"
-
+#include "mqtt_sub.h"
+enum comparison{
+	EQUAL = 1, 
+	NOT_EQUAL, 
+	LESS,
+	LESS_EQUAL, 
+	MORE, 
+	MORE_EQUAL
+};
+enum types{
+	STRINGTYPE = 1,
+	DECIMALTYPE,
+};
+struct topic {
+	char *name;
+	char *key;
+	char *type;
+	char *comparison;
+	char *value;
+};
 void uci_init(struct uci_context *ctx, char* configName, struct uci_package **package)
 {
 	ctx = uci_alloc_context();
@@ -57,10 +77,11 @@ int uci_element_checkMessage(const struct mosquitto_message *msg, struct uci_pac
 	if(parsed_json == NULL){
 		syslog(LOG_ERR, "Failed to parse message...");
 		syslog(LOG_INFO, "Message received: topic: %s message: %s", msg->topic, (char*)msg->payload);
-		return;
+		return -1;
 	}
-		uci_element_parseMessage(package, parsed_json, msg);
-		return;
+
+	uci_element_parseMessage(package, parsed_json, msg);
+	return 0;
 }
 
 void uci_element_parseMessage(struct uci_package *package, struct json_object *parsed_json, const struct mosquitto_message *msg)
@@ -92,38 +113,46 @@ int uci_element_outputMessage(struct topic t, struct json_object *parsed_json, c
 	struct json_object *objectValue;
 	json_object_object_get_ex(parsed_json, t.key, &objectValue);
 	char *messageValue = json_object_get_string(objectValue);
-	int topicNum; 
-	int messageNum; 
-
 	if(t.key == NULL){
 		syslog(LOG_ERR, "No key, outputting full message...");
 		syslog(LOG_INFO, "Message received: topic: %s message: %s", msg->topic, (char*)msg->payload);
-		return;
+		return -1;
 	}
 	
 	if(objectValue == NULL){
 		syslog(LOG_ERR, "Message value doesn't have the specified key...");
 		syslog(LOG_INFO, "Message received: topic: %s message: %s", msg->topic, (char*)msg->payload);
-		return;
+		return -1;
 	}
 	
 	if(t.type == NULL && t.comparison == NULL && t.value == NULL){
 		syslog(LOG_ERR, "Only key specified");
 		syslog(LOG_INFO, "Message received: topic: %s value: %s", msg->topic, messageValue);
-		return;
+		return -1;
 	}
+
+	uci_element_outputMessageSelect(t, objectValue, messageValue);
 	
+	return 0;
+}
+
+void uci_element_outputMessageSelect(struct topic t, struct json_object *objectValue, char *messageValue)
+{
+	char *topicPtr;
+	char *messagePtr;
+	long topicNum = strtol(t.value, &topicPtr, 10);
+	long messageNum = strtol(messageValue, &messagePtr, 10);
 	switch(atoi(t.type)){
 		case STRINGTYPE:
-			if(atoi(t.value)){
+			if(topicPtr != t.value){
 				syslog(LOG_ERR,"Type chosen as string, but value from input is a number.");
-				syslog(LOG_INFO, "Message received: topic: %s message: %s", msg->topic, (char*)msg->payload);
+				syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %s", t.name, t.key, messageValue);
 				break;
 			}
 
-			if(atoi(messageValue)){
+			if(messagePtr != messageValue){
 				syslog(LOG_ERR,"Type chosen as string, but value from message is a number.");
-				syslog(LOG_INFO, "Message received: topic: %s message: %s", msg->topic, (char*)msg->payload);
+				syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %s", t.name, t.key, messageValue);
 				break;
 			}
 
@@ -131,55 +160,64 @@ int uci_element_outputMessage(struct topic t, struct json_object *parsed_json, c
 		break;
 		
 		case DECIMALTYPE:
-				if(!(topicNum = atoi(t.value))){
+				if(topicPtr == t.value){
 					syslog(LOG_ERR,"Type chosen as decimal, but value from input is a string.");
-					syslog(LOG_INFO, "Message received: topic: %s message: %s", msg->topic, (char*)msg->payload);
+					syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %s", t.name, t.key, messageValue);
 					break;
 				}
 				
-				if(!(messageNum=atoi(messageValue))){
+				if(messagePtr == messageValue){
 					syslog(LOG_ERR,"Type chosen as decimal, but value from message is a string.");
-					syslog(LOG_INFO, "Message received: topic: %s message: %s", msg->topic, (char*)msg->payload);
+					syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %s", t.name, t.key, messageValue);
 					break;
 				}
 				uci_element_outputMessageInt(messageNum, topicNum, t);
 		break;
 	}
-	return;
 }
-
-
 void uci_element_outputMessageInt(int messageValue, int topicValue, struct topic t)
 {
 	switch(atoi(t.comparison)){
 		case EQUAL: // ==
-		if(messageValue == topicValue)
+		if(messageValue == topicValue){
+			syslog(LOG_INFO, "Value is == %d", topicValue);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %d", t.name, t.key, messageValue);
+		}
 		break;
 		
 		case NOT_EQUAL: // !=
-		if(messageValue != topicValue)
+		if(messageValue != topicValue){
+			syslog(LOG_INFO, "Value is != %d", topicValue);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %d", t.name, t.key, messageValue);
+		}
 		break;
 		
 		case LESS: // <
-		if(messageValue < topicValue)
+		if(messageValue < topicValue){
+			syslog(LOG_INFO, "Value is < %d", topicValue);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %d", t.name, t.key, messageValue);
+		}
 		break;
 		
 		case LESS_EQUAL: // <=
-		if(messageValue <= topicValue)
+		if(messageValue <= topicValue){
+			syslog(LOG_INFO, "Value is <= %d", topicValue);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %d", t.name, t.key, messageValue);
+		}
 		break;
 		
 		case MORE: // >
-		if(messageValue > topicValue)
+		if(messageValue > topicValue){
+			syslog(LOG_INFO, "Value is > %d", topicValue);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %d", t.name, t.key, messageValue);
+		}
 		break;
 		
 		case MORE_EQUAL: // >=
-		if(messageValue >= topicValue)
+		if(messageValue >= topicValue){
+			syslog(LOG_INFO, "Value is >= %d", topicValue);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %d", t.name, t.key, messageValue);
+		}
 		break;
 					
 		default:
@@ -191,33 +229,45 @@ void uci_element_outputMessageString(char *messageValue, struct topic t)
 {
 	switch(atoi(t.comparison)){
 		case EQUAL: // ==
-		if(strcmp(messageValue, t.name) == 0)
+		if(strcmp(messageValue, t.value) == 0){
+			syslog(LOG_INFO, "Value is == %s", t.value);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %s", t.name, t.key, messageValue);
+		}
 		break;
 		
 		case NOT_EQUAL: // !=
-		if(strcmp(messageValue, t.name) != 0)
+		if(strcmp(messageValue, t.value) != 0){
+			syslog(LOG_INFO, "Value is != %s", t.value);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %s", t.name, t.key, messageValue);
+		}
 		break;
 		
 		case LESS: // <
-		if(strcmp(messageValue, t.name) < 0)
+		if(strcmp(messageValue, t.value) < 0){
+			syslog(LOG_INFO, "Value is < %s", t.value);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %s", t.name, t.key, messageValue);
+		}
 		break;
 		
 		case LESS_EQUAL: // <=
-		if(strcmp(messageValue, t.name) <= 0)
+		if(strcmp(messageValue, t.value) <= 0){
+			syslog(LOG_INFO, "Value is <= %s", t.value);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %s", t.name, t.key, messageValue);
+		}
 		break;
 		
 		case MORE: // >
-		if(strcmp(messageValue, t.name) > 0)
+		if(strcmp(messageValue, t.value) > 0){
+			syslog(LOG_INFO, "Value is > %s", t.value);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %s", t.name, t.key, messageValue);
+		}
 		break;
 		
 		case MORE_EQUAL: // >=
-		if(strcmp(messageValue, t.name) >= 0)
+		if(strcmp(messageValue, t.value) >= 0){
+			syslog(LOG_INFO, "Value is >= %s", t.value);
 			syslog(LOG_INFO, "Message received: topic: %s key: %s, value: %s", t.name, t.key, messageValue);
+		}
 		break;
 					
 		default:
