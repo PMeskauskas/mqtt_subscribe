@@ -37,7 +37,7 @@ void uci_init(struct uci_context *ctx, char* configName, struct uci_package **pa
 
 void uci_load_package(struct uci_context *ctx, const char *config_name, struct uci_package **package)
 {
-    if(uci_load(ctx, config_name, package) !=UCI_OK){
+	if(uci_load(ctx, config_name, package) !=UCI_OK){
 		syslog(LOG_ERR, "Failed to load uci");
 		uci_free_context(ctx);
 		cleanup(1);
@@ -52,19 +52,19 @@ void uci_element_checkOption(struct uci_option *option, char* type, char** value
 
 void uci_element_subscribe(struct uci_package *package, struct mosquitto **mosq)
 {
-    struct uci_element *i, *j;
-    uci_foreach_element(&package->sections, i){
+	struct uci_element *i, *j;
+	uci_foreach_element(&package->sections, i){
 		struct uci_section *section = uci_to_section(i);
-        char *section_type = section->type;
-        char *topic = NULL;
-        char *qos = NULL;
+		char *section_type = section->type;
+		char *topic = NULL;
+		char *qos = NULL;
 
 		if(strcmp(section_type,"topic") == 0){
-            uci_foreach_element(&section->options, j){
-                struct uci_option *option = uci_to_option(j);
-                uci_element_checkOption(option,"topic", &topic);
-                uci_element_checkOption(option,"qos", &qos);
-            }
+			uci_foreach_element(&section->options, j){
+				struct uci_option *option = uci_to_option(j);
+				uci_element_checkOption(option,"topic", &topic);
+				uci_element_checkOption(option,"qos", &qos);
+			}
 			if(topic != NULL && qos != NULL)
 				mqtt_subscribe(mosq, topic, atoi(qos));
 		}
@@ -90,10 +90,10 @@ void uci_element_parseMessage(struct uci_package *package, struct json_object *p
 	uci_foreach_element(&package->sections, i){
 		struct topic t = {NULL, NULL, NULL, NULL, NULL};
 		struct uci_section *section = uci_to_section(i);
-        char *section_type = section->type;
+		char *section_type = section->type;
 		if(strcmp(section_type,"topic") == 0){
-            uci_foreach_element(&section->options, j){
-                struct uci_option *option = uci_to_option(j);
+			uci_foreach_element(&section->options, j){
+				struct uci_option *option = uci_to_option(j);
 				uci_element_checkOption(option,"topic", &t.name);
 				uci_element_checkOption(option,"key", &t.key);
 				uci_element_checkOption(option,"type", &t.type);

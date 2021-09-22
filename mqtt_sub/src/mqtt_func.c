@@ -6,8 +6,8 @@
 
 void mqtt_new(struct mosquitto **mosq)
 {
-    *mosq = mosquitto_new(NULL, true, NULL);
-    if(*mosq == NULL){
+	*mosq = mosquitto_new(NULL, true, NULL);
+	if(*mosq == NULL){
 		syslog(LOG_ERR, "Error: Out of memory.\n");
 		cleanup(1);
 	}
@@ -16,9 +16,9 @@ void mqtt_new(struct mosquitto **mosq)
 
 void mqtt_connect(struct mosquitto **mosq, char *address, char* port)
 {
-    int rc = MOSQ_ERR_SUCCESS;
+	int rc = MOSQ_ERR_SUCCESS;
 	long portNum;
-    char *portPtr;
+	char *portPtr;
 
 	if(address == NULL && port == NULL){
 		syslog(LOG_ERR, "Must specify port and address...");
@@ -33,7 +33,7 @@ void mqtt_connect(struct mosquitto **mosq, char *address, char* port)
 		cleanup(1);
 	}
 	
-    rc = mosquitto_connect(*mosq, address, portNum, 60);
+	rc = mosquitto_connect(*mosq, address, portNum, 60);
 	if(rc != MOSQ_ERR_SUCCESS){
 		mosquitto_destroy(*mosq);
 		syslog(LOG_ERR, "Error connecting: %s\n", mosquitto_strerror(rc));

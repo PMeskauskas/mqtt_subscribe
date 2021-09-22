@@ -31,16 +31,16 @@ static struct argp_option options[] ={
 
 void sigHandler(int signo) 
 {
-    signal(SIGINT, NULL);
-    syslog(LOG_INFO, "Received signal: %d", signo);
-    interrupt = 1;
+	signal(SIGINT, NULL);
+	syslog(LOG_INFO, "Received signal: %d", signo);
+	interrupt = 1;
 }
 
 void cleanup(int sig)
 {
 	syslog(LOG_INFO, "Closing program...");
-    closelog();
-    exit(sig);
+	closelog();
+	exit(sig);
 }
 
 void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
@@ -56,9 +56,9 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
 			arguments->port = arg;
 		break;
 
-    	case 'r':
-     		arguments->remoteAddress = arg;
-     	break;
+		case 'r':
+			arguments->remoteAddress = arg;
+		break;
 
 		case ARGP_KEY_ARG:
 			arguments->args[state->arg_num] = arg;
@@ -66,7 +66,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
 		
 		default:
 			return ARGP_ERR_UNKNOWN;
-    }
+	}
 	return 0;
 }
 
@@ -90,17 +90,17 @@ static struct argp argp = { options, parse_opt, args_doc, doc };
 
 int main(int argc, char *argv[]) 
 {
-    struct mosquitto *mosq;
+	struct mosquitto *mosq;
 	struct arguments arguments;
 	int rc;
 	arguments.remoteAddress = NULL;
-  	arguments.port = NULL;
+	arguments.port = NULL;
 
 	argp_parse (&argp, argc, argv, 0, 0, &arguments);
 	openlog(NULL, LOG_CONS, LOG_USER);
 
-    signal(SIGINT, sigHandler);
-    signal(SIGTERM, sigHandler);
+	signal(SIGINT, sigHandler);
+	signal(SIGTERM, sigHandler);
 
 	uci_init(ctx, CONFIG, &package);
 	mqtt_init(mosq, arguments, package);
