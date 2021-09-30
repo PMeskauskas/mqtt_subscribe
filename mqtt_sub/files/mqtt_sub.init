@@ -3,7 +3,6 @@ CONFIG=/etc/config/mqtt_sub
 USE_PROCD=1
 start_service() {
     local enabled 
-    local theme
     local remoteaddress
 	local port
     config_load 'mqtt_sub'

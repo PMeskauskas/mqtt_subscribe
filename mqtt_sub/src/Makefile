@@ -1,5 +1,5 @@
 BIN:=mqtt_sub
-LDFLAGS:=-lmosquitto -luci -ljson-c -largp
+LDFLAGS:=-lmosquitto -luci -ljson-c -largp -lcurl
 CPPFLAGS:=-I$(CURDIR)
 SRC:=$(wildcard *.c)
 OBJS:=$(SRC:.c=.o)

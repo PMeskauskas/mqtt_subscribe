@@ -2,6 +2,7 @@
 #include <syslog.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <json-c/json.h>
 #include "mqtt_sub.h"
 
 void mqtt_new(struct mosquitto **mosq)

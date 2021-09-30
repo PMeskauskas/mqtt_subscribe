@@ -1,0 +1,1 @@
+void curl_sendEmail(char *recipient, struct sender *sender, char *message);

@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mqtt_sub
 	CATEGORY:=Base system
 	TITLE:=mqtt_sub
-	DEPENDS:=+libmosquitto +libuci +libjson-c 
+	DEPENDS:=+libmosquitto +libuci +libjson-c +libcurl
 endef
 
 define Package/mqtt_sub/description
@@ -25,4 +25,4 @@ define Package/mqtt_sub/install
 	$(INSTALL_CONF) ./files/mqtt_sub.config $(1)/etc/config/mqtt_sub
 endef
 
-$(eval $(call BuildPackage,mqtt_sub))
+$(eval $(call BuildPackage,mqtt_sub, +libcurl))
